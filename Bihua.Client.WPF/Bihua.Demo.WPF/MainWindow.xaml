@@ -1,0 +1,46 @@
+﻿<Window x:Class="Bihua.Demo.WPF.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:Bihua.Demo.WPF"
+        xmlns:cvts ="clr-namespace:Bihua.Demo.WPF.Converters"
+        mc:Ignorable="d"
+        x:Name="self"
+        WindowStartupLocation="CenterScreen"
+        Title="笔画笔顺例子" Height="420" Width="525">
+    <Window.Resources>
+        <Style TargetType="{x:Type TextBlock}">
+            <Setter Property="FontSize" Value="16"/>
+        </Style>
+    </Window.Resources>
+        
+    <DockPanel>
+        <Border DockPanel.Dock="Top">
+            <StackPanel Margin="0,20" HorizontalAlignment="Center" Orientation="Horizontal">
+                <TextBox MaxLength="1" Width="150" FontSize="18" Text="{Binding Text,ElementName=self,UpdateSourceTrigger=PropertyChanged}">
+                </TextBox>
+                <Button Content="Go" Click="Button_Click"/>
+            </StackPanel>
+        </Border>
+        <StackPanel DataContext="{Binding ChineseChar,ElementName=self}" HorizontalAlignment="Center" Orientation="Vertical">
+            <StackPanel.Resources>
+                <Style TargetType="{x:Type StackPanel}">
+                    <Setter Property="Orientation" Value="Horizontal"/>
+                    <Setter Property="Margin" Value="0,0,0,5"/>
+                </Style>
+            </StackPanel.Resources>
+            <StackPanel>
+                <TextBlock Text="部首："/>
+                <TextBlock Text="{Binding BuShou}" Foreground="Red"/>
+            </StackPanel>
+            <StackPanel>
+                <TextBlock Text="拼音："/>
+                <TextBlock Text="{Binding Pinyins,Converter={cvts:PingyinsConverter}}" Foreground="Red"/>
+            </StackPanel>
+            <Border BorderBrush="Gray" BorderThickness="1" Width="250" Height="250">
+                <local:BihuaActor ChineseChar="{Binding }"/>
+            </Border>
+        </StackPanel>
+    </DockPanel>
+</Window>

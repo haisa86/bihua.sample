@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8" />
+    <style>
+        #main{text-align: center;margin: 20px auto 20px auto;width: 800px; }
+            #input-box{width: 150px;font-size: 18px;}
+            #btn-go{height: 30px;line-height: 20px; font-size: 18px;}
+            #content>div{ margin: 0 0 5px 0; font-size: 16px;}
+            #content>div>span{ color:red;}
+            #content .bihuaactor-container{ border: gray 1px solid; width: 252px; height: 252px; text-align: center; margin: 0px auto;}
+            #bihuaactor .bihua{fill:gray;fill-rule:evenodd;}
+            #bihuaactor .biShun{stroke:green; stroke-width: 3px;stroke-linejoin:round;fill:transparent;}
+        </style>
+    <script src="jquery-3.4.1.min.js"></script>
+    <script>
+        $(function () {
+            //需要先启动服务端项目：Bihua.WebApi
+            const apiUrl = 'https://localhost:44319/api/bihuas/chinese';
+
+            let clear = function () {
+                $('#bushou').empty();
+                $('#pinyins').empty();
+                $('#bihuaactor').empty();
+            };
+
+            let fillPolyline = function (datas, rectSize, className) {
+                var ret = [];
+                let bihuaactor = document.getElementById('bihuaactor');
+                let nameSpace = bihuaactor.getAttribute('xmlns');
+
+                let ratio = parseFloat(bihuaactor.getAttribute('width')) / rectSize;
+
+
+                for (let yibi of datas) {
+                    let path = document.createElementNS(nameSpace, 'path');
+                    let d = 'M' + parseInt(yibi[0][0] * ratio)+ ',' + parseInt(yibi[0][1] * ratio)+" L";
+                    for(let i=0;i<yibi.length;i++){
+                        let p = yibi[i];
+                        d = d + parseInt(p[0] * ratio) + ',' + parseInt(p[1] * ratio) +' ';
+                    }
+                    path.setAttribute('d', d);
+                    path.setAttribute('class', className);
+                    bihuaactor.appendChild(path);
+                    ret.push(path);
+                }
+                return ret;
+            };
+
+            /**
+            播放笔顺动画
+            */
+            let playBiShuns = function(biShuns,lengthArr){
+
+                var j=0;
+                var animateArr = [];
+                var onFinish = function () {
+                    j++;
+                    if(j>biShuns.length-1){
+                        for(let i=0;i<lengthArr.length;i++){
+                            animateArr[i].cancel();
+                        }
+                        j = 0;
+                    }
+                    animateArr[j].play();
+                };
+
+                for(let i=0;i<biShuns.length;i++){
+                    let yibi = biShuns[i];
+                    let ani = yibi.animate([
+                        { strokeDashoffset: lengthArr[i] },
+                        { strokeDashoffset: '0' }
+                    ], {
+                        duration: Math.min(1500, lengthArr[i]),
+                        fill: 'forwards'
+                    });
+                    ani.cancel();
+                    ani.onfinish = onFinish;
+                    animateArr.push(ani);
+                }
+
+                animateArr[0].play();
+            };
+
+            let fill = function (chineseChar) {
+                $('#bushou').html(chineseChar.buShou);
+                $('#pinyins').html(chineseChar.pinyins.join('；'));
+
+                //创建笔画图形
+                fillPolyline(chineseChar.biHuas, chineseChar.rectSize, 'bihua');
+                let biShuns = fillPolyline(chineseChar.biShuns, chineseChar.rectSize, 'biShun');
+                let lengthArr = [];
+                //创建笔顺图形
+                for(let path of biShuns){
+                    let length = path.getTotalLength();
+                    path.style.strokeDasharray = length;
+                    path.style.strokeDashoffset = length;
+                    lengthArr.push(length);
+                }
+
+                playBiShuns(biShuns,lengthArr);
+            };
+
+            //go按钮事件
+            $('#btn-go').on('click', function () {
+                let text = $.trim($('#input-box').val());
+                if (text.length < 1) {
+                    clear();
+                    return;
+                }
+
+                fetch(apiUrl + "/" + text)
+                    .catch(_ => {
+                        clear();
+                        console.log('request failed', _);
+                    })
+                    .then(_ => { clear(); return _.json(); })
+                    .then(_ => fill(_));
+            });
+
+
+        });
+    </script>
+</head>
+
+<body>
+    <div id="main">
+        <div style="margin:20px 0;">
+            <input id="input-box" type="text" maxlength="1" /><button id="btn-go">Go</button>
+        </div>
+        <div id="content">
+            <div>
+                部首：<span id="bushou"></span>
+            </div>
+            <div>
+                拼音：<span id="pinyins"></span>
+            </div>
+            <div class="bihuaactor-container">
+                <svg id="bihuaactor" xmlns="http://www.w3.org/2000/svg" version="1.1" width="250" height="250">
+                </svg>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>
