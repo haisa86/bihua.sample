@@ -21,12 +21,12 @@ namespace Bihua.WebApi.Controllers
         }
 
         /// <summary>
-        /// GET api/Chinese/好
+        /// GET api/bihuas/chinese/好
         /// 获取单个中文字符的笔画笔顺信息
         /// </summary>
         /// <param name="text">单个中文字符</param>
         /// <returns></returns>
-        [HttpGet("Chinese/{text}")]
+        [HttpGet("chinese/{text}")]
         public async Task<ActionResult<ChineseChar>> Chinese(string text)
         {
             if (string.IsNullOrWhiteSpace(text) || text.Length > 1) return BadRequest();
